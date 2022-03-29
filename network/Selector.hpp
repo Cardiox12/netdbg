@@ -40,8 +40,12 @@ namespace net {
         ~Selector() {
             std::for_each(m_sockets.begin(), m_sockets.end(),
                 [](selector_value_type it){
-                    it.second->close();
-                    delete it.second;
+                    Socket *socket = it.second;
+
+                    if ( socket ){
+                        it.second->close();
+                        delete it.second;
+                    }
                 });
         }
 
@@ -55,6 +59,12 @@ namespace net {
             }
         }
 
+        void add(int fd){
+            m_max_fd = std::max(m_max_fd, fd);
+            m_sockets.insert(std::make_pair(fd, nullptr));
+            FD_SET(fd, &m_master);
+        }
+
         void remove(Socket *socket){
             if ( socket != NULL ){
                 m_sockets.erase(socket->fd());
@@ -62,9 +72,14 @@ namespace net {
             }
         }
 
-        std::vector<Socket*> select(int seconds = -1) {
-            timeval					timeout = (timeval){ .tv_sec = seconds, .tv_usec = 0 };
-            std::vector<Socket*>	ready;
+        void remove(int fd){
+            m_sockets.erase(fd);
+            FD_CLR(fd, &m_master);
+        }
+
+        std::vector<std::pair<int, Socket*>> select(int seconds = -1) {
+            timeval					                timeout = (timeval){ .tv_sec = seconds, .tv_usec = 0 };
+            std::vector<std::pair<int, Socket*>>	ready;
 
             m_copy = m_master;
             if ( seconds == -1 )
@@ -74,7 +89,7 @@ namespace net {
             std::for_each(m_sockets.begin(), m_sockets.end(),
                 [&](selector_value_type p){
                     if ( FD_ISSET(p.first, &m_copy) ){
-                        ready.push_back( p.second );
+                        ready.push_back( p );
                     }
                 });
             return std::move( ready );

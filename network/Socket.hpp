@@ -16,6 +16,7 @@
 
 # include <stdexcept>
 # include <algorithm>
+# include <iostream>
 
 # include "Network.hpp"
 # include "Utils.hpp"
@@ -25,7 +26,7 @@
 # include <cstdio>
 
 # define FD_UNSET -1
-# define BUF_SIZE 2
+# define BUF_SIZE 2048
 
 namespace net {
     void *get_in_addr(sockaddr *sa)
@@ -229,7 +230,7 @@ namespace net {
         }
 
         // TODO: Manage exception on listen failure
-        void listen(int n) const {
+        void listen(int n = 5) const {
             if ( ::listen(m_fd, n) == -1 )
                 throw SocketException("listen exception");
         }
