@@ -60,18 +60,19 @@ int main(int argc, char *argv[]) {
             Socket *client = p.second;
 
             if ( client == nullptr && p.first == STDIN_FILENO ){
-                std::cin >> buff;
+                std::getline(std::cin, buff);
+                buff += "\n";
 
-                printf("Sending (%d bytes): %s\n", buff.size(), buff.c_str());
+                printf("Sending  [%d bytes]: %s", buff.size(), buff.c_str());
                 server->send(buff);
-                printf("Sent (%d bytes).\n", buff.size());
+                printf("Sent     [%d bytes].\n", buff.size());
             } else {
                 if ( client->recv(buff) == 0 ){
                     printf("Peer has closed the connection.\n");
                     release_socket(&client);
                     exit(EXIT_SUCCESS);
                 }
-                printf("Received (%d bytes): %.*s\n", buff.size(), buff.size(), buff.c_str());
+                printf("Received [%d bytes]: %.*s\n", buff.size(), buff.size(), buff.c_str());
             }
         });
     }
